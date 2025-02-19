@@ -3,6 +3,7 @@ import getAvailableDates from '@salesforce/apex/PollAppointment.getAvailableDate
 import getAvailableSlots from '@salesforce/apex/PollAppointment.getAvailableSlots';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import saveBooking from '@salesforce/apex/PollAppointment.saveBooking';
+import cancelBooking from '@salesforce/apex/PollAppointment.cancelBooking';
 
 export default class CalendarBooking extends LightningElement {
     @track availableDates = [];
@@ -47,17 +48,24 @@ export default class CalendarBooking extends LightningElement {
         this.showSlots = true;
 
         // Fetch available slots for the selected date
-        getAvailableSlots()
-        .then(data => {
-            this.availableSlots = data.map(slot => ({
-                time: slot,
-                isSelected: false
-            }));
-        })
-        .catch(error => {
-            console.error('Error fetching slots:', error);
-        });
+        getAvailableSlots({ selectedDate: this.selectedDate })
+    .then(response => {
+        console.log("✅ Slots Data Received:", JSON.stringify(response));
+        const data = JSON.parse(response); // ✅ Convert JSON string to object
 
+        this.availableSlots = data.availableSlots.map(slot => ({
+            time: slot,
+            isSelected: false
+        }));
+
+        this.bookedSlots = data.bookedSlots.map(slot => ({
+            time: slot,
+            isSelected: false
+        }));
+    })
+    .catch(error => {
+        console.error('❌ Error fetching slots:', error);
+    });
         this.availableDates = [...this.availableDates];
     }
 
@@ -85,28 +93,84 @@ export default class CalendarBooking extends LightningElement {
             .then(result => {
                 console.log("✅ Save Booking Result:", result);
                 if (result === 'Success') {
-                    this.showToast('Success', 'Booking Confirmed!', 'success');
+                    this.showToast('Success', 'Appointment Booked!', 'success');
+
+                    // ❗ Refresh slots after booking
+                    return getAvailableSlots({ selectedDate: this.selectedDate });
                 } else {
-                    this.showToast('Error', result, 'error');
+                    throw new Error(result);
                 }
+            })
+            .then(updatedSlots => {
+                console.log("🔄 Updated Slots After Booking:", updatedSlots);
+
+                // ✅ Ensure default values to prevent undefined errors
+                this.availableSlots = updatedSlots.availableSlots?.map(slot => ({
+                    time: slot,
+                    isSelected: false
+                })) || [];
+
+                this.bookedSlots = updatedSlots.bookedSlots?.map(slot => ({
+                    time: slot,
+                    isSelected: false
+                })) || [];
+
+                this.selectedSlot = null;
+                this.availableSlots = [...this.availableSlots]; // ✅ Force UI update
+                this.bookedSlots = [...this.bookedSlots]; // ✅ Refresh booked slots
+
             })
              .catch(error => {
                 console.error('Error booking:', error);
                 this.showToast('Error', error.body.message, 'error');
             });
+
             
             
         } else {
             this.showToast('Error', 'Please select a date and slot.', 'error');
         }
-        
+       
+
 
         
     }
 
-    handleCancel() {
-        this.selectedSlot = null;
-        this.availableSlots = this.availableSlots.map(slot => ({ ...slot, isSelected: false }));
+    handleCancelBooking(event) {
+        const slotToCancel = event.currentTarget.dataset.time;
+
+    cancelBooking({ selectedDate: this.selectedDate, selectedSlot: slotToCancel }) 
+        .then(result => {
+            if (result === 'Success') {
+                this.showToast('Success', 'Appointment Canceled!', 'success');
+
+                // ❗ Refresh slots after cancellation
+                return getAvailableSlots({ selectedDate: this.selectedDate });
+            } else {
+                throw new Error(result);
+            }
+        })
+        .then(updatedSlots => {
+            console.log("🔄 Updated Slots After Cancellation:", updatedSlots);
+
+            // ✅ Ensure default values to prevent undefined errors
+            this.availableSlots = updatedSlots.availableSlots?.map(slot => ({
+                time: slot,
+                isSelected: false
+            })) || [];
+
+            this.bookedSlots = updatedSlots.bookedSlots?.map(slot => ({
+                time: slot,
+                isSelected: false
+            })) || [];
+
+            this.availableSlots = [...this.availableSlots]; // Force UI refresh
+            this.bookedSlots = [...this.bookedSlots];
+        })
+        .catch(error => {
+            console.error('❌ Error canceling:', error);
+            this.showToast('Error', error.body?.message || error.message, 'error');
+        });
     }
 
     closeModal() {

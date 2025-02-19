@@ -14,25 +14,43 @@
         </div>
 
         <!-- Slot Selection -->
-        <template if:true={showSlots}>
-            <div class="slot-container">
-                <template for:each={availableSlots} for:item="slot">
-                    <div key={slot.time} 
-                         class="slot-box {slot.isSelected ? 'selected-slot' : ''}" 
-                         onclick={handleSlotClick} 
-                         data-time={slot.time}>
-                        {slot.time}
-                    </div>
-                </template>
+        <!-- Available Slots Section -->
+<template if:true={showSlots}>
+    <h3>Available Slots</h3>
+    <div class="slot-container">
+        <template for:each={availableSlots} for:item="slot">
+            <div key={slot.time} 
+                 class="slot-box {slot.isSelected ? 'selected-slot' : ''}" 
+                 onclick={handleSlotClick} 
+                 data-time={slot.time}>
+                {slot.time}
             </div>
         </template>
+    </div>
+</template>
 
+<!-- Booked Slots Section -->
+<template if:true={bookedSlots}>
+    <template if:true={bookedSlots.length}>
+        <h3>Booked Slots</h3>
+        <div class="slot-container">
+            <template for:each={bookedSlots} for:item="slot">
+                <div key={slot.time} class="slot-box booked-slot">
+                    {slot.time}
+                    <lightning-button label="Cancel" variant="destructive" 
+                        onclick={handleCancelBooking} data-time={slot.time} class="slds-m-left_x-small">
+                    </lightning-button>
+                </div>
+            </template>
+        </div>
+    </template>
+</template>
         <!-- Confirmation Section -->
         <template if:true={selectedSlot}>
             <div class="confirmation-box">
                 <p>Booking Confirmed for <b>{selectedDate}</b> at <b>{selectedSlot}</b></p>
                 <lightning-button label="Confirm" variant="brand" onclick={handleConfirm}></lightning-button>
-                <lightning-button label="Cancel" variant="destructive" onclick={handleCancel} class="slds-m-left_small"></lightning-button>
+                <lightning-button label="Cancel" variant="destructive" onclick={handleCancelBooking}  class="slds-m-left_small"></lightning-button>
             </div>
         </template>
 

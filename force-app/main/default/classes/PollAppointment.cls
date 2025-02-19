@@ -20,21 +20,36 @@ public with sharing class PollAppointment {
   }
   // ✅ Fetch Available Slots for Selected Date
   @AuraEnabled(cacheable=true)
-  public static List<String> getAvailableSlots() {
-      List<String> slots = new List<String>();
+public static String getAvailableSlots(String selectedDate) {
+    Map<String, List<String>> slotsMap = new Map<String, List<String>>();
+    slotsMap.put('availableSlots', new List<String>());
+    slotsMap.put('bookedSlots', new List<String>());
 
-      // Fetch all slots from Pooling_Slot__c
-      List<Pooling_Slot__c> slotRecords = [
-          SELECT Slot__c FROM Pooling_Slot__c
-      ];
+    List<Pooling_Slot__c> allSlots = [SELECT Slot__c FROM Pooling_Slot__c];
 
-      for (Pooling_Slot__c slot : slotRecords) {
-          slots.add(slot.Slot__c);
-      }
+    Set<String> bookedSlotsSet = new Set<String>();
+    List<Booking_Appointment__c> bookedAppointments = [
+        SELECT Selected_Slot__c FROM Booking_Appointment__c
+        WHERE Selected_Date__c = :selectedDate
+    ];
 
-      return slots;
-  }
+    for (Booking_Appointment__c booking : bookedAppointments) {
+        bookedSlotsSet.add(booking.Selected_Slot__c);
+    }
 
+    for (Pooling_Slot__c slot : allSlots) {
+        if (bookedSlotsSet.contains(slot.Slot__c)) {
+            slotsMap.get('bookedSlots').add(slot.Slot__c);
+        } else {
+            slotsMap.get('availableSlots').add(slot.Slot__c);
+        }
+    }
+
+    return JSON.serialize(slotsMap);
+}
+
+
+  //✅ Save Booking Appointment
   @AuraEnabled
   public static String saveBooking(String selectedDate, String selectedSlot) {
       try {
@@ -54,4 +69,23 @@ public with sharing class PollAppointment {
           return 'Error: ' + e.getMessage();
       }
     }
+
+    @AuraEnabled
+public static String cancelBooking(String selectedDate, String selectedSlot) {
+    try {
+        List<Booking_Appointment__c> bookingsToDelete = [
+            SELECT Id FROM Booking_Appointment__c
+            WHERE Selected_Date__c = :selectedDate AND Selected_Slot__c = :selectedSlot
+        ];
+
+        if (!bookingsToDelete.isEmpty()) {
+            delete bookingsToDelete;
+            return 'Success';
+        } else {
+            return 'Error: No booking found';
+        }
+    } catch (Exception e) {
+        return 'Error: ' + e.getMessage();
+    }
+}
 }

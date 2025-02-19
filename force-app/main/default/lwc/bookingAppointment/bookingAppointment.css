@@ -1,64 +1,82 @@
-
+/* Date Selection Container */
 .date-container {
     display: flex;
-    gap: 10px;
+    gap: 12px;
     margin-bottom: 15px;
     align-items: center;
-    justify-content: space-evenly
+    justify-content: center;
+    flex-wrap: wrap;
 }
 
+/* Date Box Styling */
 .date-box {
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
+    padding: 12px 15px;
+    border: 2px solid #ccc;
+    border-radius: 6px;
     text-align: center;
     cursor: pointer;
-    background-color:#372FCC;
-    transition: 0.3s;
-}
-.date-box:hover {
-    background-color: #5a49ff; /* Lighter shade for hover */
-    transform: scale(1.05); /* Slight zoom effect */
+    background-color: #372FCC;
+    color: white;
+    font-weight: bold;
+    transition: all 0.3s ease;
 }
 
-.date-box:active {
+.date-box:hover {
+    background-color: #5a49ff; /* Lighter shade for hover */
+    transform: scale(1.07); /* Slight zoom effect */
+}
+
+.date-box.selected-date {
     background-color: #FF5733 !important;  /* New color when selected */
     color: white;
     font-weight: bold;
     border: 2px solid #fff;
+    transform: scale(1.1);
 }
 
+/* Slot Container */
 .slot-container {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: 12px;
     margin-bottom: 15px;
     justify-content: center;
 }
 
+/* Slot Box Styling */
 .slot-box {
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
+    padding: 12px 15px;
+    border: 2px solid #ccc;
+    border-radius: 6px;
     cursor: pointer;
-    transition: 0.3s;
+    transition: all 0.3s ease;
+    font-size: 16px;
+    background-color: white;
+}
+
+.slot-box:hover {
+    background-color: #ddd;
+    transform: scale(1.05);
 }
 
 .slot-box.selected-slot {
     background-color: #0070d2;
     color: white;
     font-weight: bold;
+    border: 2px solid white;
+    transform: scale(1.1);
 }
 
+/* Confirmation Box */
 .confirmation-box {
     margin-top: 15px;
-    padding: 10px;
-    border-radius: 5px;
+    padding: 12px;
+    border-radius: 6px;
     background: #f3f3f3;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 10px;
+    gap: 12px;
 }
 
 /* Modal Styling */
@@ -67,24 +85,48 @@
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 40%;
-    max-width: 500px;
+    width: 45%;
+    max-width: 520px;
     background: white;
-    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
-    border-radius: 8px;
+    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.3);
+    border-radius: 10px;
     z-index: 1000;
+    animation: fadeIn 0.3s ease-in-out;
 }
 
 .slds-modal__container {
-    padding: 20px;
+    padding: 25px;
 }
 
+/* Backdrop for Modal */
 .slds-backdrop {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.5);
+    background: rgba(0, 0, 0, 0.6);
     z-index: 999;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+/* Booked Slot Styling */
+.booked-slot {
+    background-color: #f44336 !important;
+    color: white;
+    font-weight: bold;
+    border: 2px solid #fff;
+    cursor: not-allowed;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -55%);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%);
+    }
 }
