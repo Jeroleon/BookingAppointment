@@ -1,0 +1,90 @@
+
+.date-container {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+    align-items: center;
+    justify-content: space-evenly
+}
+
+.date-box {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    text-align: center;
+    cursor: pointer;
+    background-color:#372FCC;
+    transition: 0.3s;
+}
+.date-box:hover {
+    background-color: #5a49ff; /* Lighter shade for hover */
+    transform: scale(1.05); /* Slight zoom effect */
+}
+
+.date-box:active {
+    background-color: #FF5733 !important;  /* New color when selected */
+    color: white;
+    font-weight: bold;
+    border: 2px solid #fff;
+}
+
+.slot-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 15px;
+    justify-content: center;
+}
+
+.slot-box {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.slot-box.selected-slot {
+    background-color: #0070d2;
+    color: white;
+    font-weight: bold;
+}
+
+.confirmation-box {
+    margin-top: 15px;
+    padding: 10px;
+    border-radius: 5px;
+    background: #f3f3f3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+/* Modal Styling */
+.slds-modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 40%;
+    max-width: 500px;
+    background: white;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    z-index: 1000;
+}
+
+.slds-modal__container {
+    padding: 20px;
+}
+
+.slds-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+}

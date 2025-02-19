@@ -1,0 +1,57 @@
+<template>
+    <lightning-card class="Book-Appointment" title="Book an Appointment" icon-name="standard:event">
+        <div class="date-container">
+            <template for:each={availableDates} for:item="date">
+                <div key={date.id} 
+                     class="date-box {date.isSelected ? 'selected' : ''}" 
+                     onclick={handleDateClick} 
+                     data-id={date.id}>
+                    <div class="month">{date.month}</div>
+                    <div class="date">{date.date}</div>
+                    <div class="day">{date.day}</div>
+                </div>
+            </template>
+        </div>
+
+        <!-- Slot Selection -->
+        <template if:true={showSlots}>
+            <div class="slot-container">
+                <template for:each={availableSlots} for:item="slot">
+                    <div key={slot.time} 
+                         class="slot-box {slot.isSelected ? 'selected-slot' : ''}" 
+                         onclick={handleSlotClick} 
+                         data-time={slot.time}>
+                        {slot.time}
+                    </div>
+                </template>
+            </div>
+        </template>
+
+        <!-- Confirmation Section -->
+        <template if:true={selectedSlot}>
+            <div class="confirmation-box">
+                <p>Booking Confirmed for <b>{selectedDate}</b> at <b>{selectedSlot}</b></p>
+                <lightning-button label="Confirm" variant="brand" onclick={handleConfirm}></lightning-button>
+                <lightning-button label="Cancel" variant="destructive" onclick={handleCancel} class="slds-m-left_small"></lightning-button>
+            </div>
+        </template>
+
+        <!-- Success Modal -->
+        <template if:true={showModal}>
+            <section role="dialog" class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container">
+                    <header class="slds-modal__header">
+                        <h2 class="slds-text-heading_medium">Appointment Confirmation</h2>
+                    </header>
+                    <div class="slds-modal__content">
+                        <p>Your appointment on <b>{selectedDate}</b> at <b>{selectedSlot}</b> has been successfully booked.</p>
+                    </div>
+                    <footer class="slds-modal__footer">
+                        <lightning-button label="Close" variant="brand" onclick={closeModal}></lightning-button>
+                    </footer>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </template>
+    </lightning-card>
+</template>
