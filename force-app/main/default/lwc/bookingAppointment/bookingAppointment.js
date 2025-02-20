@@ -110,6 +110,9 @@ export default class CalendarBooking extends LightningElement {
                 this.showToast('Error', error.body?.message || error.message, 'error');
             });
     }
+    get disableConfirm() {
+        return !this.selectedDate || !this.selectedSlot;
+    }
 
     handleCancelBooking(event) {
         const slotToCancel = event.currentTarget.dataset.time;

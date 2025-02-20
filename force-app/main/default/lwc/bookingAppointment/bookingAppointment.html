@@ -81,7 +81,7 @@
         <template if:true={selectedSlot}>
             <div class="confirmation-box">
                 <p>Booking Confirmed for <b>{selectedDate}</b> at <b>{selectedSlot}</b></p>
-                <lightning-button label="Confirm" variant="brand" onclick={handleConfirm}></lightning-button>
+                <lightning-button label="Confirm" variant="brand" onclick={handleConfirm} disabled={disableConfirm}></lightning-button>
                 <lightning-button label="Cancel" variant="destructive" onclick={handleCancelBooking} class="slds-m-left_small"></lightning-button>
             </div>
         </template>
