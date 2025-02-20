@@ -1,4 +1,5 @@
 public with sharing class PollAppointment {
+
   // ✅ Fetch Available Dates (Today to Two Weeks)
   @AuraEnabled(cacheable=true)
   public static List<Map<String, String>> getAvailableDates() {
@@ -18,6 +19,7 @@ public with sharing class PollAppointment {
       }
       return dateList;
   }
+
   // ✅ Fetch Available Slots for Selected Date
   @AuraEnabled(cacheable=true)
 public static String getAvailableSlots(String selectedDate) {
@@ -70,6 +72,7 @@ public static String getAvailableSlots(String selectedDate) {
       }
     }
 
+// ✅ Cancel Booking
     @AuraEnabled
 public static String cancelBooking(String selectedDate, String selectedSlot) {
     try {
@@ -88,4 +91,61 @@ public static String cancelBooking(String selectedDate, String selectedSlot) {
         return 'Error: ' + e.getMessage();
     }
 }
+
+// ✅ Reschedule Booking
+ @AuraEnabled
+    public static String rescheduleBooking(String oldDate, String oldSlot, String newDate, String newSlot) {
+        try {
+            // ✅ Find the existing booking
+            List<Booking_Appointment__c> existingBookings = [
+                SELECT Id, Selected_Date__c, Selected_Slot__c, Status__c 
+                FROM Booking_Appointment__c
+                WHERE Selected_Date__c = :oldDate
+                AND Selected_Slot__c = :oldSlot
+                LIMIT 1
+            ];
+
+            if (existingBookings.isEmpty()) {
+                return 'Error: No existing booking found for the given date and slot.';
+            }
+
+            Booking_Appointment__c booking = existingBookings[0];
+            booking.Selected_Date__c = newDate;
+            booking.Selected_Slot__c = newSlot;
+            booking.Status__c = 'Rescheduled'; // ✅ Valid picklist value
+
+            update booking;
+
+            // ✅ Mark the old slot as available (if needed)
+            List<Pooling_Slot__c> oldSlotRecords = [
+                SELECT Id FROM Pooling_Slot__c
+                WHERE Slot__c = :oldSlot
+                LIMIT 1
+            ];
+            if (!oldSlotRecords.isEmpty()) {
+                Pooling_Slot__c slotToRelease = oldSlotRecords[0];
+                slotToRelease.Status__c = 'Available'; // ✅ Mark old slot as free
+                update slotToRelease;
+            }
+
+            // ✅ Mark the new slot as "Booked"
+            List<Pooling_Slot__c> newSlotRecords = [
+                SELECT Id FROM Pooling_Slot__c
+                WHERE Slot__c = :newSlot
+                LIMIT 1
+            ];
+            if (!newSlotRecords.isEmpty()) {
+                Pooling_Slot__c slotToBook = newSlotRecords[0];
+                slotToBook.Status__c = 'Booked'; // ✅ Mark new slot as taken
+                update slotToBook;
+            }
+
+            return 'Success';
+        } catch (Exception e) {
+            System.debug('❌ Error in rescheduleBooking: ' + e.getMessage());
+            return 'Error: ' + e.getMessage();
+        }
+    }
+
+
 }
