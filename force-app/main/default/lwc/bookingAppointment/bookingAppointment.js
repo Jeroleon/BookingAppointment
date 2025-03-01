@@ -13,17 +13,14 @@ export default class CalendarBooking extends LightningElement {
     @track selectedDate = null;
     @track selectedSlot = null;
     @track showSlots = false;
-    @track showModal = false;
     @track showRescheduleModal = false;
 
     // Reschedule Data
-    @track rescheduleAvailableDates = [];
     @track rescheduleAvailableSlots = [];
     @track newSelectedDate = null;
     @track newSelectedSlot = null;
-    @track rescheduleSlot = null;
+    @track rescheduleBookingId = null;
 
-    // Date range for selection
     minDate = new Date().toISOString().split('T')[0];
     maxDate = new Date();
     
@@ -32,7 +29,6 @@ export default class CalendarBooking extends LightningElement {
         this.maxDate = this.maxDate.toISOString().split('T')[0];
     }
 
-    // Load available dates
     @wire(getAvailableDates)
     wiredDates({ error, data }) {
         if (data) {
@@ -43,27 +39,34 @@ export default class CalendarBooking extends LightningElement {
                 day: date.dayName,
                 isSelected: false
             }));
+            console.log('Available dates loaded:', this.availableDates);
         } else if (error) {
             console.error('❌ Error fetching dates:', error);
+            this.showToast('Error', 'Failed to load available dates.', 'error');
         }
     }
 
-    // Load available slots
     loadSlots(date) {
         getAvailableSlots({ selectedDate: date })
             .then(response => {
+                console.log('Raw slots response:', response);
                 const data = JSON.parse(response);
+                console.log('Parsed slots data:', data);
                 this.availableSlots = data.availableSlots.map(slot => ({
-                    time: slot,
+                    time: slot.time || 'N/A',
                     isSelected: false
                 }));
                 this.bookedSlots = data.bookedSlots.map(slot => ({
-                    time: slot,
-                    status: "Booked"
+                    bookingId: slot.bookingId,
+                    time: slot.time || 'N/A',
+                    status: slot.status || 'Booked'
                 }));
+                console.log('Available slots:', this.availableSlots);
+                console.log('Booked slots:', this.bookedSlots);
             })
             .catch(error => {
                 console.error('❌ Error fetching slots:', error);
+                this.showToast('Error', 'Failed to load slots.', 'error');
             });
     }
 
@@ -76,17 +79,18 @@ export default class CalendarBooking extends LightningElement {
             ...date,
             isSelected: date.id === this.selectedDate
         }));
+        console.log('Selected date:', this.selectedDate);
 
         this.loadSlots(this.selectedDate);
     }
 
     handleSlotClick(event) {
         this.selectedSlot = event.currentTarget.dataset.time;
-
         this.availableSlots = this.availableSlots.map(slot => ({
             ...slot,
             isSelected: slot.time === this.selectedSlot
         }));
+        console.log('Selected slot:', this.selectedSlot);
     }
 
     handleConfirm() {
@@ -97,9 +101,15 @@ export default class CalendarBooking extends LightningElement {
 
         saveBooking({ selectedDate: this.selectedDate, selectedSlot: this.selectedSlot })
             .then(result => {
-                if (result === 'Success') {
+                if (result.startsWith('Success')) {
+                    const bookingId = result.split(':')[2];
                     this.showToast('Success', 'Appointment booked successfully!', 'success');
-                    this.showModal = true;
+                    this.bookedSlots.push({
+                        bookingId: bookingId,
+                        time: this.selectedSlot,
+                        status: 'Booked'
+                    });
+                    this.selectedSlot = null;
                     this.loadSlots(this.selectedDate);
                 } else {
                     throw new Error(result);
@@ -110,14 +120,16 @@ export default class CalendarBooking extends LightningElement {
                 this.showToast('Error', error.body?.message || error.message, 'error');
             });
     }
+
     get disableConfirm() {
         return !this.selectedDate || !this.selectedSlot;
     }
 
     handleCancelBooking(event) {
-        const slotToCancel = event.currentTarget.dataset.time;
+        const bookingId = event.currentTarget.dataset.id;
+        console.log('Cancelling booking ID:', bookingId);
 
-        cancelBooking({ selectedDate: this.selectedDate, selectedSlot: slotToCancel })
+        cancelBooking({ bookingId: bookingId })
             .then(result => {
                 if (result === 'Success') {
                     this.showToast('Success', 'Appointment cancelled.', 'success');
@@ -132,63 +144,94 @@ export default class CalendarBooking extends LightningElement {
             });
     }
 
-    // ✅ **Fix: Reschedule Popup Now Loads Correctly**
     handleRescheduleClick(event) {
-        this.rescheduleSlot = event.currentTarget.dataset.time;
+        this.rescheduleBookingId = event.currentTarget.dataset.id;
         this.showRescheduleModal = true;
         this.newSelectedDate = null;
         this.newSelectedSlot = null;
+        console.log('Rescheduling booking ID:', this.rescheduleBookingId);
 
-        console.log("⏳ Fetching reschedule dates...");
-        getAvailableDates()
-            .then(data => {
-                this.rescheduleAvailableDates = data.map(date => ({
-                    id: date.dateString,
-                    month: date.month,
-                    date: date.day,
-                    day: date.dayName,
-                    isSelected: false
-                }));
-                console.log("✅ Reschedule dates loaded:", this.rescheduleAvailableDates);
-            })
-            .catch(error => {
-                console.error('❌ Error fetching reschedule dates:', error);
-            });
+        this.loadRescheduleSlots(this.selectedDate);
     }
 
     handleDateChange(event) {
         this.newSelectedDate = event.target.value;
-        console.log("📅 New selected reschedule date:", this.newSelectedDate);
+        console.log('New selected date for reschedule:', this.newSelectedDate);
+        this.loadRescheduleSlots(this.newSelectedDate);
+    }
+    
+    loadRescheduleSlots(date) {
+        getAvailableSlots({ selectedDate: date })
+            .then(response => {
+                const data = JSON.parse(response);
+                this.rescheduleAvailableSlots = data.availableSlots.map(slot => ({
+                    time: slot.time || 'N/A',
+                    isSelected: false
+                }));
+                console.log('Reschedule available slots:', this.rescheduleAvailableSlots);
+            })
+            .catch(error => {
+                console.error('❌ Error fetching reschedule slots:', error);
+                this.showToast('Error', 'Failed to load reschedule slots.', 'error');
+            });
     }
 
     handleSlotSelection(event) {
-        this.newSelectedSlot = event.detail;
-        console.log("⏰ New selected reschedule slot:", this.newSelectedSlot);
+        this.newSelectedSlot = event.currentTarget.dataset.time;
+        this.rescheduleAvailableSlots = this.rescheduleAvailableSlots.map(slot => ({
+            ...slot,
+            isSelected: slot.time === this.newSelectedSlot
+        }));
+        console.log('New selected slot for reschedule:', this.newSelectedSlot);
     }
 
     confirmReschedule() {
-        if (!this.rescheduleSlot || !this.newSelectedDate || !this.newSelectedSlot) {
+        if (!this.rescheduleBookingId || !this.newSelectedDate || !this.newSelectedSlot) {
             this.showToast('Error', 'Please select a new date and slot.', 'error');
             return;
         }
-    
+
         rescheduleBooking({ 
-            oldDate: this.selectedDate, 
-            oldSlot: this.rescheduleSlot, 
+            bookingId: this.rescheduleBookingId, 
             newDate: this.newSelectedDate, 
             newSlot: this.newSelectedSlot 
         })
         .then(result => {
-            console.log('🔹 Reschedule Response:', result);
-    
-            if (result === 'Success') {
+            const response = JSON.parse(result);
+            if (response.status === 'Success') {
                 this.showToast('Success', 'Appointment rescheduled successfully!', 'success');
+
+                // Remove the old booking from bookedSlots
+                this.bookedSlots = this.bookedSlots.filter(slot => slot.bookingId !== this.rescheduleBookingId);
+
+                // Add the new booking to bookedSlots
+                this.bookedSlots.push({
+                    bookingId: response.newBookingId,
+                    time: response.newSlot,
+                    status: 'Rescheduled'
+                });
+
+                // If rescheduling on the same date, update availableSlots
+                if (this.selectedDate === this.newSelectedDate) {
+                    this.availableSlots.push({
+                        time: response.oldSlot,
+                        isSelected: false
+                    });
+                    this.availableSlots = this.availableSlots.filter(slot => slot.time !== response.newSlot);
+                } else if (this.selectedDate === response.oldDate) {
+                    this.availableSlots.push({
+                        time: response.oldSlot,
+                        isSelected: false
+                    });
+                }
+
+                this.availableSlots.sort((a, b) => a.time.localeCompare(b.time));
+                console.log('Updated availableSlots:', this.availableSlots);
+                console.log('Updated bookedSlots:', this.bookedSlots);
+
                 this.showRescheduleModal = false;
-                this.selectedDate = this.newSelectedDate;
-                this.selectedSlot = this.newSelectedSlot;
-                this.loadSlots(this.selectedDate);
             } else {
-                throw new Error(result); // Ensure we capture and display proper error messages
+                throw new Error(response.message || 'Unknown error');
             }
         })
         .catch(error => {
@@ -199,11 +242,11 @@ export default class CalendarBooking extends LightningElement {
 
     handleRescheduleCancel() {
         this.showRescheduleModal = false;
+        console.log('Reschedule cancelled');
     }
 
-    closeModal() {
-        this.showModal = false;
-        this.showRescheduleModal = false;
+    get disableRescheduleConfirm() {
+        return !this.newSelectedDate || !this.newSelectedSlot;
     }
 
     showToast(title, message, variant) {

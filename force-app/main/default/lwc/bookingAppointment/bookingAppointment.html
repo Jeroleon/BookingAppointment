@@ -13,6 +13,10 @@
                     <div class="day">{date.day}</div>
                 </div>
             </template>
+            <!-- Add a message if no dates are available -->
+            <template if:false={availableDates.length}>
+                <p>No available dates found.</p>
+            </template>
         </div>
 
         <!-- Slot Selection -->
@@ -27,6 +31,10 @@
                         {slot.time}
                     </div>
                 </template>
+                <!-- Add a message if no slots are available -->
+                <template if:false={availableSlots.length}>
+                    <p>No available slots for this date.</p>
+                </template>
             </div>
         </template>
 
@@ -35,14 +43,21 @@
             <h3 class="Available-slots">Booked Slots</h3>
             <div class="slot-container">
                 <template for:each={bookedSlots} for:item="slot">
-                    <div key={slot.time} class="slot-box booked-slot">
-                        {slot.time}
-                        <span class="status">{slot.status}</span>
-                        <lightning-button label="Cancel" variant="destructive" 
-                            onclick={handleCancelBooking} data-time={slot.time} class="slds-m-left_x-small">
+                    <div key={slot.bookingId} class="slot-box booked-slot">
+                        <!-- Ensure slot.time is displayed, fallback if undefined -->
+                        <span>{slot.time}</span>
+                        <span class="status"> ({slot.status})</span>
+                        <lightning-button label="Cancel" 
+                                          variant="destructive" 
+                                          onclick={handleCancelBooking} 
+                                          data-id={slot.bookingId} 
+                                          class="slds-m-left_x-small">
                         </lightning-button>
-                        <lightning-button label="Reschedule" variant="brand" 
-                            onclick={handleRescheduleClick} data-time={slot.time} class="slds-m-left_x-small">
+                        <lightning-button label="Reschedule" 
+                                          variant="brand" 
+                                          onclick={handleRescheduleClick} 
+                                          data-id={slot.bookingId} 
+                                          class="slds-m-left_x-small">
                         </lightning-button>
                     </div>
                 </template>
@@ -51,26 +66,48 @@
 
         <!-- Reschedule Modal -->
         <template if:true={showRescheduleModal}>
-            <section role="dialog" class="slds-modal slds-fade-in-open">
+            <section role="dialog" class="slds-modal slds-fade-in-open" aria-modal="true">
                 <div class="slds-modal__container">
                     <header class="slds-modal__header">
                         <h2 class="slds-text-heading_medium">Reschedule Appointment</h2>
                     </header>
                     <div class="slds-modal__content slds-p-around_medium">
                         <lightning-input 
-                        type="date" 
-                        class="date-picker" 
-                        label="Select Reschedule Date" 
-                        min={minDate}
-                        max={maxDate}
-                        value={selectedRescheduleDate}
-                        onchange={handleDateChange}>
-                    </lightning-input>
-                        <c-slot-selector available-slots={availableSlots} onslotselect={handleSlotSelection}></c-slot-selector>
+                            type="date" 
+                            class="date-picker" 
+                            label="Select Reschedule Date" 
+                            min={minDate}
+                            max={maxDate}
+                            value={newSelectedDate}
+                            onchange={handleDateChange}>
+                        </lightning-input>
+                        <template if:true={rescheduleAvailableSlots.length}>
+                            <div class="slot-container">
+                                <template for:each={rescheduleAvailableSlots} for:item="slot">
+                                    <div key={slot.time} 
+                                         class="slot-box {slot.isSelected ? 'selected-slot' : ''}" 
+                                         onclick={handleSlotSelection} 
+                                         data-time={slot.time}>
+                                        {slot.time}
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+                        <!-- Add a message if no slots are available -->
+                        <template if:false={rescheduleAvailableSlots.length}>
+                            <p>No available slots for the selected date.</p>
+                        </template>
                     </div>
                     <footer class="slds-modal__footer">
-                        <lightning-button variant="neutral" label="Cancel" onclick={handleRescheduleCancel}></lightning-button>
-                        <lightning-button variant="brand" label="Confirm" onclick={confirmReschedule}></lightning-button>
+                        <lightning-button variant="neutral" 
+                                          label="Cancel" 
+                                          onclick={handleRescheduleCancel}>
+                        </lightning-button>
+                        <lightning-button variant="brand" 
+                                          label="Confirm" 
+                                          onclick={confirmReschedule}
+                                          disabled={disableRescheduleConfirm}>
+                        </lightning-button>
                     </footer>
                 </div>
             </section>
@@ -81,8 +118,11 @@
         <template if:true={selectedSlot}>
             <div class="confirmation-box">
                 <p>Booking Confirmed for <b>{selectedDate}</b> at <b>{selectedSlot}</b></p>
-                <lightning-button label="Confirm" variant="brand" onclick={handleConfirm} disabled={disableConfirm}></lightning-button>
-                <lightning-button label="Cancel" variant="destructive" onclick={handleCancelBooking} class="slds-m-left_small"></lightning-button>
+                <lightning-button label="Confirm" 
+                                  variant="brand" 
+                                  onclick={handleConfirm} 
+                                  disabled={disableConfirm}>
+                </lightning-button>
             </div>
         </template>
     </lightning-card>

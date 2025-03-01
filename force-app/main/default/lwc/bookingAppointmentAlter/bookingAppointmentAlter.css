@@ -15,7 +15,7 @@
     border-radius: 6px;
     text-align: center;
     cursor: pointer;
-    background-color: #372fcc; /* Consistent lowercase hex */
+    background-color: #372FCC;
     color: white;
     font-weight: bold;
     transition: all 0.3s ease;
@@ -26,9 +26,8 @@
     transform: scale(1.07); /* Slight zoom effect */
 }
 
-/* Consolidated selected state (merged .selected-date and .selected) */
-.date-box.selected {
-    background-color: #ff5733 !important; /* Matches template usage */
+.date-box.selected-date {
+    background-color: #FF5733 !important;  /* New color when selected */
     color: white;
     font-weight: bold;
     border: 2px solid #fff;
@@ -89,13 +88,13 @@
     width: 45%;
     max-width: 520px;
     background: white;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); /* Simplified syntax */
+    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.3);
     border-radius: 10px;
     z-index: 1000;
     animation: fadeIn 0.3s ease-in-out;
+    -webkit-animation: fadeIn 0.3s ease-in-out;
 }
 
-/* Removed -webkit-animation (modern browsers support animation natively) */
 .slds-modal__container {
     padding: 25px;
 }
@@ -112,7 +111,7 @@
     animation: fadeIn 0.3s ease-in-out;
 }
 
-/* Booked Slot Styling (merged duplicate rules) */
+/* Booked Slot Styling */
 .booked-slot {
     background-color: #f44336 !important;
     color: white;
@@ -132,33 +131,22 @@
         transform: translate(-50%, -50%);
     }
 }
-
-/* Available Slots Header */
-.Available-slots {
+.Available-slots{
     display: flex;
     justify-content: center;
     font-weight: bold;
     font-size: 20px;
     margin-bottom: 5px;
 }
-
-/* Optional Enhancements */
-/* Focus styles for accessibility */
-.date-box:focus,
-.slot-box:focus {
-    outline: 2px solid #0070d2;
-    outline-offset: 2px;
+.date-box.selected {
+    background-color: #ff5733 !important;
+    color: white;
+    border: 2px solid white;
+    transform: scale(1.1);
 }
-
-/* Responsive adjustments */
-@media (max-width: 600px) {
-    .date-box,
-    .slot-box {
-        padding: 8px 10px;
-        font-size: 14px;
-    }
-    .slds-modal {
-        width: 90%;
-        max-width: none;
-    }
+.booked-slot {
+    background-color: #f44336 !important;
+    color: white;
+    border: 2px solid white;
+    cursor: not-allowed;
 }
